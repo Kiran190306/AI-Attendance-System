@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Records{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📋 Attendance Records</h1>
+    <p>Complete attendance history with date filtering and search</p>
+</div>
+
+<div class="content">
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-size: 1.3rem;">All Records ({{ total_count }})</h2>
+        <a href="/download-csv" class="btn btn-primary">📥 Download CSV</a>
+    </div>
+
+    {% if dates %}
+        <div class="filter-container">
+            <form method="get" style="display: flex; gap: 1rem; align-items: center;">
+                <label for="date" style="font-weight: 600; color: #333;">Filter by date:</label>
+                <select name="date" id="date" onchange="this.form.submit()">
+                    <option value="">-- All Dates --</option>
+                    {% for date in dates %}
+                        <option value="{{ date }}" {% if date == selected_date %}selected{% endif %}>{{ date }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if records %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Student Name</th>
+                    <th>Confidence</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                    <tr>
+                        <td><strong>{{ record.date }}</strong></td>
+                        <td>{{ record.time }}</td>
+                        <td>{{ record.name }}</td>
+                        <td>
+                            {% set conf = record.confidence %}
+                            {% if conf >= '95%' %}
+                                <span class="badge success">{{ conf }}</span>
+                            {% elif conf >= '85%' %}
+                                <span class="badge secondary">{{ conf }}</span>
+                            {% else %}
+                                <span class="badge warning">{{ conf }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.85rem; color: #999;">{{ record.timestamp }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <span>📭</span>
+            <p>No attendance records found</p>
+            {% if selected_date %}
+                <p style="font-size: 0.9rem; margin-top: 0.5rem; color: #bbb;">No records for {{ selected_date }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    <h3 style="margin-bottom: 1rem; color: #333;">Export Options</h3>
+    <div class="button-group">
+        <a href="/download-csv" class="btn" style="background-color: #48bb78; color: white;">📥 Download All Records (CSV)</a>
+        <a href="/" class="btn btn-primary">📊 Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

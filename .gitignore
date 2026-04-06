@@ -1,0 +1,14 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# virtual environment
+venv/
+
+# datasets and logs
+dataset/
+attendance/*.csv
+logs/
+
+# environment file
+.env

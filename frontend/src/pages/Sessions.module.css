@@ -1,0 +1,166 @@
+.page {
+  max-width: 900px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.btnPrimary {
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.btnPrimary:hover {
+  background: var(--accent-dim);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.formCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.formCard h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.formCard label {
+  display: block;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.formCard label input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.error {
+  background: rgba(255,107,107,0.15);
+  color: var(--danger);
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.formActions button:first-child {
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.cardHeader strong {
+  color: var(--text);
+}
+
+.date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.cardMeta {
+  margin-bottom: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(0, 212, 170, 0.2);
+  color: var(--accent);
+  border-radius: 4px;
+}
+
+.badgeMuted {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btnSmall {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  background: var(--surface-hover);
+  color: var(--text);
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btnSmall:hover {
+  background: var(--border);
+}
+
+.muted {
+  color: var(--text-muted);
+  margin-top: 1rem;
+}

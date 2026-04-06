@@ -1,0 +1,32 @@
+# requirements for AI Attendance System (Flask version)
+
+Flask>=2.3,<3
+Flask-Cors>=3.0
+
+# database
+SQLAlchemy>=2.0
+
+# face recognition / vision
+opencv-python>=4.8
+mtcnn>=0.1.0
+opencv-contrib-python>=4.8
+face-recognition>=1.3.0
+mediapipe>=0.10
+numpy>=1.24
+Pillow
+
+# audio / speech
+SpeechRecognition>=3.8
+# PyAudio is required for microphone access on many platforms; install separately
+# (``pip install pyaudio`` or use system package manager)
+
+# utilities
+dotenv
+
+# optional for performance
+dlib
+
+# development
+gunicorn
+pytest
+

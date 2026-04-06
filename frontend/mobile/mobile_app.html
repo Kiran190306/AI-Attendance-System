@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mobile Attendance</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding:10px; }
+        video { width: 100%; max-width: 400px; }
+        canvas { display: none; }
+        .result { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Mobile Attendance</h1>
+    <p>Please align your face in the camera and tap the button.</p>
+    <video id="video" autoplay playsinline></video>
+    <button id="captureBtn">Capture & Send</button>
+    <div class="result" id="result"></div>
+    <script src="mobile_camera.js"></script>
+    <script src="mobile_api.js"></script>
+</body>
+</html>

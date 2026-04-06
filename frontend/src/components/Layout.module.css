@@ -1,0 +1,101 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.brandIcon {
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav a {
+  padding: 0.6rem 1.25rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav a:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.navActive {
+  background: var(--surface-hover) !important;
+  color: var(--accent) !important;
+  border-left: 3px solid var(--accent);
+  margin-left: -3px;
+  padding-left: calc(1.25rem + 3px) !important;
+}
+
+.user {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.userRole {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.logout {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.logout:hover {
+  color: var(--danger);
+}
+
+.main {
+  flex: 1;
+  padding: 2rem;
+  overflow: auto;
+}
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-muted);
+}

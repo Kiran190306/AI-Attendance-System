@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>👥 Enrolled Students</h1>
+    <p>Student list with enrollment status and face image counts</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card success">
+        <div class="label">Total Students</div>
+        <div class="value">{{ total_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Active</div>
+        <div class="value">{{ students | selectattr('status', 'equalto', 'OK') | list | length }}</div>
+    </div>
+    <div class="stat-card secondary">
+        <div class="label">Needs Setup</div>
+        <div class="value">{{ students | selectattr('status', 'equalto', 'NO FACES') | list | length }}</div>
+    </div>
+</div>
+
+<div class="content">
+    <h2 style="margin-bottom: 1.5rem; font-size: 1.3rem;">Student Directory</h2>
+
+    {% if students %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Images Found</th>
+                    <th>Valid Faces</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                    <tr>
+                        <td><strong>{{ student.name }}</strong></td>
+                        <td>{{ student.images_found }}</td>
+                        <td>{{ student.images_processed }}</td>
+                        <td>
+                            {% if student.status == 'OK' %}
+                                <span class="badge success">✓ Active</span>
+                            {% else %}
+                                <span class="badge warning">⚠ No Faces</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <span>👥</span>
+            <p>No students found in dataset</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: #bbb;">Add student folders to the dataset/ directory with face images</p>
+        </div>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    <h3 style="margin-bottom: 1rem; color: #333;">Setup Instructions</h3>
+    <div style="background-color: #f7fafc; padding: 1.5rem; border-left: 4px solid #667eea; border-radius: 8px;">
+        <p style="margin-bottom: 1rem;">To add a new student:</p>
+        <ol style="margin-left: 1.5rem; line-height: 1.8;">
+            <li>Create a folder in <code style="background: #e2e8f0; padding: 0.2rem 0.5rem; border-radius: 4px;">dataset/StudentName/</code></li>
+            <li>Add 3-5 clear face photos (JPG or PNG)</li>
+            <li>Restart the attendance system</li>
+            <li>Check this page to verify the student appears with status "Active"</li>
+        </ol>
+    </div>
+    <div class="button-group" style="margin-top: 1.5rem;">
+        <a href="/" class="btn btn-primary">📊 Back to Dashboard</a>
+        <a href="/records" class="btn btn-secondary">📋 View Records</a>
+    </div>
+</div>
+{% endblock %}

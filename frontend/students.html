@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Students</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Students</h1>
+            <nav>
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/attendance" class="nav-link">Attendance</a>
+                <a href="/students" class="nav-link active">Students</a>
+            </nav>
+        </header>
+        <section class="section">
+            <button class="btn" id="refreshStudents">Refresh</button>
+            <table id="studentsTable">
+                <thead>
+                    <tr><th>Name</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </div>
+    <script>
+        async function loadStudents() {
+            const resp = await fetch('/api/students');
+            const data = await resp.json();
+            const tbody = document.querySelector('#studentsTable tbody');
+            tbody.innerHTML = '';
+            data.students.forEach(name => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${name}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('refreshStudents').addEventListener('click', loadStudents);
+        loadStudents();
+    </script>
+</body>
+</html>

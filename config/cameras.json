@@ -1,0 +1,7 @@
+{
+  "cameras": [
+    {"id": "CAM_1", "source": 0},
+    {"id": "CAM_2", "source": "rtsp://192.168.1.10/stream"},
+    {"id": "CAM_3", "source": "rtsp://192.168.1.20/stream"}
+  ]
+}

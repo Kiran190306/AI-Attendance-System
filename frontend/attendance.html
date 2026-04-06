@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Logs</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Attendance Records</h1>
+            <nav>
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/attendance" class="nav-link active">Attendance</a>
+                <a href="/students" class="nav-link">Students</a>
+            </nav>
+        </header>
+        <section class="section">
+            <button class="btn" id="downloadCsv">Download CSV</button>
+            <table id="attendanceTable">
+                <thead>
+                    <tr><th>Date</th><th>Name</th><th>Time</th><th>Confidence</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </div>
+    <script>
+        async function loadAttendance() {
+            const resp = await fetch('/api/attendance');
+            const data = await resp.json();
+            const tbody = document.querySelector('#attendanceTable tbody');
+            tbody.innerHTML = '';
+            data.records.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.date}</td><td>${r.name}</td><td>${r.time}</td><td>${r.confidence}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('downloadCsv').addEventListener('click', () => {
+            window.location = '/api/attendance?download=1';
+        });
+        loadAttendance();
+    </script>
+</body>
+</html>

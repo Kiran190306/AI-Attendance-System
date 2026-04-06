@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .stats { display: flex; gap: 20px; }
+        .card { padding: 20px; border: 1px solid #ccc; border-radius: 5px; flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f4f4f4; }
+        .btn { padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Attendance Analytics Dashboard</h1>
+    <div class="stats">
+        <div class="card">
+            <h3>Total Present</h3>
+            <div id="total">0</div>
+        </div>
+        <div class="card">
+            <h3>Late Students</h3>
+            <div id="late">0</div>
+        </div>
+        <div class="card">
+            <h3>Avg. Attention</h3>
+            <div id="avg_attention">0%</div>
+        </div>
+        <div class="card">
+            <a href="/export" class="btn">Download CSV</a>
+        </div>
+    </div>
+
+    <canvas id="attendanceChart" width="400" height="200"></canvas>
+
+    <h2>Today's Records</h2>
+    <table>
+        <thead><tr><th>Name</th><th>Time</th><th>Confidence</th></tr></thead>
+        <tbody id="records"></tbody>
+    </table>
+
+    <script>
+        async function loadData() {
+            const stats = await fetch('/api/stats').then(r=>r.json());
+            document.getElementById('total').textContent = stats.total;
+            document.getElementById('late').textContent = stats.late;
+
+            const recs = await fetch('/api/today').then(r=>r.json());
+            const labels = recs.map(r=>r.name);
+            const data = recs.map(r=>1);
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: '# present', data, backgroundColor: 'rgba(54, 162, 235, 0.5)' }] }
+            });
+            // load presence summary
+            const presence = await fetch('/api/presence').then(r=>r.json());
+            if (presence.summary) {
+                document.getElementById('avg_attention').textContent =
+                    presence.summary.avg_attention.toFixed(1) + '%';
+            }
+
+            const tbody = document.getElementById('records');
+            tbody.innerHTML = '';
+            recs.forEach(r=>{
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${r.name}</td><td>${new Date(r.timestamp).toLocaleTimeString()}</td><td>${r.confidence}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+        loadData();
+    </script>
+</body>
+</html>
