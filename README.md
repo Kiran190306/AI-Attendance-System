@@ -1,9 +1,9 @@
-# AI Attendance System  
+# 🚀 AI Face Recognition Attendance System  
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/AI-Attendance-System?style=social)](https://github.com/yourusername/AI-Attendance-System)
-[![Status](https://img.shields.io/badge/status-production-green.svg)]()
+[![GitHub stars](https://img.shields.io/github/stars/Kiran190306/AI-Attendance-System?style=social)](https://github.com/Kiran190306/AI-Attendance-System)
+[![Status](https://img.shields.io/badge/status-active-green.svg)]()
 
 ## Project Overview
 A complete AI-driven attendance platform that uses face recognition,
@@ -99,5 +99,12 @@ refer to them here. A short demo GIF can be placed under `docs/demo.gif`.
 - Enhanced anti-spoof with liveness detection models
 - Integration with LMS platforms
 
+##AI-powered smart attendance system using face recognition, analytics dashboard, and multi-camera support.
+
+## 💡 Use Cases
+
+- Smart Classroom
+- Office Attendance
+- Secure Entry Systems
 ---
 *See `docs/system_flow.md` for detailed data flow description.*
