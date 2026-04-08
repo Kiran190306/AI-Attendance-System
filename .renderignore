@@ -1,0 +1,61 @@
+venv/
+env/
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.git
+.gitignore
+.env
+.env.local
+node_modules/
+
+# Large data folders
+dataset/
+logs/
+*.csv
+
+# Model files (heavy)
+*.pkl
+*.h5
+*.joblib
+*.model
+*.pth
+*.onnx
+
+# Media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.wav
+*.mp3
+
+# Development files
+*.md
+docs/
+*.ipynb
+sandbox/
+test/
+tests/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Render-specific
+build/
+dist/
+*.egg-info/
+.cache/

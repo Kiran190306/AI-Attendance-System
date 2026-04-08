@@ -1,0 +1,23 @@
+# Cloud Backend Requirements
+# AI Attendance System - Hybrid Cloud Deployment
+
+# Web Framework
+Flask>=2.3,<3
+Flask-Cors>=3.0
+
+# HTTP Requests
+requests>=2.30
+
+# Production Server
+gunicorn>=21.0
+
+# Utilities
+python-dotenv>=1.0
+
+# Optional: Database (future use)
+# SQLAlchemy>=2.0
+# psycopg2-binary>=2.9
+
+# Development
+# pytest>=7.0
+# pytest-cov>=4.0
