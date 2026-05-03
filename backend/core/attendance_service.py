@@ -100,10 +100,10 @@ class AttendanceService:
         self._marked.add(norm.lower())
         self._stats["recognized"] += 1
         self._recent.insert(0, {"name": norm, "timestamp": time_str, "confidence": f"{confidence:.2%}"})
-        # write to db
+        # write to db (include camera info when available)
         db = SessionLocal()
         try:
-            AttendanceRepository.add_entry(db, norm, confidence)
+            AttendanceRepository.add_entry(db, norm, confidence, timestamp=now, camera=camera_name)
         except Exception as exc:
             logger.error("db write failed: %s", exc)
         finally:

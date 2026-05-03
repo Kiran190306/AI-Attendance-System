@@ -1,0 +1,24 @@
+# Requirements for Production Backend
+
+# Server
+Flask>=2.3,<3
+Flask-Cors>=3.0
+gunicorn>=21.0.0
+Werkzeug>=2.3
+
+# Database
+SQLAlchemy>=2.0
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+cryptography>=42.0.0
+
+# JSON & Validation
+Pillow>=10.2.0
+
+# Environment
+python-dotenv>=1.0
+
+# Optional: Monitoring
+python-json-logger>=2.0.4
