@@ -20,9 +20,9 @@ from pathlib import Path
 from threading import Timer
 
 # Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent))
 
-from web.app import create_app
+from frontend.web.app import create_app
 
 
 def open_browser(url: str, delay: float = 2.0) -> None:

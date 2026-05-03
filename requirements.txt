@@ -22,6 +22,7 @@ SpeechRecognition>=3.8
 
 # utilities
 dotenv
+requests
 
 # optional for performance
 dlib

@@ -5,6 +5,7 @@ Provides web interface to view attendance records, student list, and download da
 
 import csv
 import json
+import io
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any
@@ -16,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.attendance_service import AttendanceService
-from core.config import ATTENDANCE_CSV, DATASET_PATH
+from core.config import ATTENDANCE_DB, DATASET_PATH
 from core.dataset_loader import DatasetLoader
 
 
@@ -57,7 +58,7 @@ def create_app() -> Flask:
             today_attendance.append({
                 'time': record['time'],
                 'name': record['name'],
-                'confidence': f"{float(record['confidence']):.1%}",
+                'confidence': record.get('confidence', '0%'),
                 'timestamp': record['timestamp_iso']
             })
         
@@ -98,36 +99,31 @@ def create_app() -> Flask:
     @app.route('/records')
     def records():
         """View all attendance records."""
-        # Get all records from CSV
-        records_list = []
+        # Get all records from database
+        records_list = attendance_service.get_records(limit=1000)  # Get more records for the records page
         
-        try:
-            if ATTENDANCE_CSV.exists():
-                with open(ATTENDANCE_CSV, 'r', encoding='utf-8') as f:
-                    reader = csv.DictReader(f)
-                    for row in reader:
-                        if row:
-                            records_list.append({
-                                'date': row.get('date', ''),
-                                'time': row.get('time', ''),
-                                'name': row.get('name', ''),
-                                'confidence': f"{float(row.get('confidence', '0')):.1%}",
-                                'timestamp': row.get('timestamp_iso', '')
-                            })
-        except Exception as e:
-            pass
+        # Format for display
+        formatted_records = []
+        for record in records_list:
+            formatted_records.append({
+                'date': record.get('date', ''),
+                'time': record.get('time', ''),
+                'name': record.get('name', ''),
+                'confidence': record.get('confidence', '0%'),
+                'timestamp': record.get('timestamp_iso', '')
+            })
         
         # Reverse to show latest first
-        records_list = records_list[::-1]
+        formatted_records = formatted_records[::-1]
         
         # Get date filter from query string
         date_filter = request.args.get('date', '')
         
         if date_filter:
-            records_list = [r for r in records_list if r['date'] == date_filter]
+            formatted_records = [r for r in formatted_records if r['date'] == date_filter]
         
         # Get unique dates for filter
-        dates = sorted(set(r['date'] for r in records_list), reverse=True)
+        dates = sorted(set(r['date'] for r in formatted_records if r['date']), reverse=True)
         
         return render_template('records.html',
                              records=records_list,
@@ -166,7 +162,7 @@ def create_app() -> Flask:
             {
                 'time': r['time'],
                 'name': r['name'],
-                'confidence': float(r['confidence'])
+                'confidence': float(r['confidence'].strip('%')) / 100 if r.get('confidence') else 0.0
             }
             for r in records
         ]
@@ -182,15 +178,45 @@ def create_app() -> Flask:
     def download_csv():
         """Download attendance CSV file."""
         try:
-            if ATTENDANCE_CSV.exists():
-                return send_file(
-                    ATTENDANCE_CSV,
-                    mimetype='text/csv',
-                    as_attachment=True,
-                    download_name=f'attendance_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
-                )
-            else:
-                return jsonify({'error': 'Attendance file not found'}), 404
+            import io
+            
+            # Get all records from database
+            records = attendance_service.get_records(limit=10000)  # Get all records
+            
+            if not records:
+                return jsonify({'error': 'No attendance records found'}), 404
+            
+            # Create CSV in memory
+            output = io.StringIO()
+            writer = csv.DictWriter(
+                output,
+                fieldnames=['id', 'name', 'time', 'status', 'date', 'confidence', 'camera_id', 'timestamp_iso']
+            )
+            writer.writeheader()
+            
+            for record in records:
+                # Convert confidence back to decimal for CSV
+                csv_record = record.copy()
+                if 'confidence' in csv_record and csv_record['confidence']:
+                    try:
+                        csv_record['confidence'] = f"{float(csv_record['confidence'].strip('%')) / 100:.2%}"
+                    except:
+                        pass
+                writer.writerow(csv_record)
+            
+            # Create response
+            output.seek(0)
+            response_data = output.getvalue()
+            output.close()
+            
+            # Return as downloadable file
+            return send_file(
+                io.BytesIO(response_data.encode('utf-8')),
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name=f'attendance_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            )
+            
         except Exception as e:
             return jsonify({'error': str(e)}), 500
     
@@ -201,7 +227,7 @@ def create_app() -> Flask:
         return jsonify({
             'status': 'healthy',
             'timestamp': datetime.now().isoformat(),
-            'attendance_csv_exists': ATTENDANCE_CSV.exists(),
+            'attendance_db_exists': ATTENDANCE_DB.exists(),
             'dataset_path_exists': DATASET_PATH.exists()
         })
     

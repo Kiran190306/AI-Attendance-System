@@ -1,0 +1,2 @@
+rootProject.name = 'AIAttendanceApp'
+include ':app'

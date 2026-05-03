@@ -4,6 +4,7 @@ from pathlib import Path
 DATASET_PATH: Path = Path("dataset")
 ATTENDANCE_DIR: Path = Path("attendance")
 ATTENDANCE_CSV: Path = ATTENDANCE_DIR / "attendance.csv"
+ATTENDANCE_DB: Path = ATTENDANCE_DIR / "attendance.db"
 
 # --- face detection / recognition --------------------------------------
 DETECTION_SCALE: float = 0.5                # scale down frame for faster detection

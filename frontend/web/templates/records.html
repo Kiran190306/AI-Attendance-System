@@ -29,37 +29,39 @@
     {% endif %}
 
     {% if records %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Student Name</th>
-                    <th>Confidence</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in records %}
+        <div class="table-container">
+            <table>
+                <thead>
                     <tr>
-                        <td><strong>{{ record.date }}</strong></td>
-                        <td>{{ record.time }}</td>
-                        <td>{{ record.name }}</td>
-                        <td>
-                            {% set conf = record.confidence %}
-                            {% if conf >= '95%' %}
-                                <span class="badge success">{{ conf }}</span>
-                            {% elif conf >= '85%' %}
-                                <span class="badge secondary">{{ conf }}</span>
-                            {% else %}
-                                <span class="badge warning">{{ conf }}</span>
-                            {% endif %}
-                        </td>
-                        <td style="font-size: 0.85rem; color: #999;">{{ record.timestamp }}</td>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Student Name</th>
+                        <th>Confidence</th>
+                        <th>Timestamp</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td><strong>{{ record.date }}</strong></td>
+                            <td>{{ record.time }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>
+                                {% set conf = record.confidence %}
+                                {% if conf >= '95%' %}
+                                    <span class="badge success">{{ conf }}</span>
+                                {% elif conf >= '85%' %}
+                                    <span class="badge secondary">{{ conf }}</span>
+                                {% else %}
+                                    <span class="badge warning">{{ conf }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.85rem; color: #999;">{{ record.timestamp }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% else %}
         <div class="empty-state">
             <span>📭</span>

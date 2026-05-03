@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "com.attendance.app-debug-32:/layout_item_attendance.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/item_attendance.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/drawable_splash_background.xml.flat",
+        "source": "com.attendance.app-main-34:/drawable/splash_background.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/layout_activity_main.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/layout_activity_dashboard.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/activity_dashboard.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/layout_activity_attendance.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/activity_attendance.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/layout_activity_splash.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "com.attendance.app-debug-32:/layout_activity_login.xml.flat",
+        "source": "com.attendance.app-main-34:/layout/activity_login.xml"
+    }
+]

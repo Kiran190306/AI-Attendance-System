@@ -230,7 +230,7 @@ def run_attendance() -> int:
         logger.info("  - Total frames processed: %d", frame_count)
         logger.info("  - Enrolled students: %d", final_stats["enrolled_students"])
         logger.info("Attendance Data:")
-        logger.info("  - CSV Location: %s", config.ATTENDANCE_CSV)
+        logger.info("  - Database Location: %s", config.ATTENDANCE_DB)
         logger.info("=" * 60)
 
     return 0

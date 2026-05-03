@@ -1,78 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Analytics</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .stats { display: flex; gap: 20px; }
-        .card { padding: 20px; border: 1px solid #ccc; border-radius: 5px; flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background: #f4f4f4; }
-        .btn { padding: 10px 15px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
-    </style>
-</head>
-<body>
-    <h1>Attendance Analytics Dashboard</h1>
-    <div class="stats">
-        <div class="card">
-            <h3>Total Present</h3>
-            <div id="total">0</div>
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>📊 Attendance Dashboard</h1>
+    <p>Real-time attendance monitoring and analytics for {{ today_date }}</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card success">
+        <div class="label">Total Students</div>
+        <div class="value">{{ total_students }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Present Today</div>
+        <div class="value">{{ marked_today }}</div>
+    </div>
+    <div class="stat-card secondary">
+        <div class="label">Attendance Rate</div>
+        <div class="value">
+            {% if total_students > 0 %}
+                {{ "%.1f"|format((marked_today / total_students) * 100) }}%
+            {% else %}
+                0%
+            {% endif %}
         </div>
-        <div class="card">
-            <h3>Late Students</h3>
-            <div id="late">0</div>
-        </div>
-        <div class="card">
-            <h3>Avg. Attention</h3>
-            <div id="avg_attention">0%</div>
-        </div>
-        <div class="card">
-            <a href="/export" class="btn">Download CSV</a>
+    </div>
+    <div class="stat-card">
+        <div class="label">Session Stats</div>
+        <div class="value">{{ stats.recognized_count }}</div>
+    </div>
+</div>
+
+<div class="content">
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h2 style="font-size: 1.3rem;">Today's Attendance Records ({{ records|length }})</h2>
+        <div class="button-group">
+            <a href="/download-csv" class="btn btn-primary">📥 Download CSV</a>
+            <a href="/records" class="btn btn-secondary">📋 View All Records</a>
         </div>
     </div>
 
-    <canvas id="attendanceChart" width="400" height="200"></canvas>
+    {% if records %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Student Name</th>
+                        <th>Confidence</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td><strong>{{ record.time }}</strong></td>
+                            <td>{{ record.name }}</td>
+                            <td>
+                                {% set conf_value = record.confidence|replace('%', '')|float %}
+                                {% if conf_value >= 90 %}
+                                    <span class="badge success">{{ record.confidence }}</span>
+                                {% elif conf_value >= 70 %}
+                                    <span class="badge warning">{{ record.confidence }}</span>
+                                {% else %}
+                                    <span class="badge danger">{{ record.confidence }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge success">✓ Present</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <span>📋</span>
+            <p>No attendance records for today yet</p>
+            <p>Records will appear here as students check in</p>
+        </div>
+    {% endif %}
+</div>
 
-    <h2>Today's Records</h2>
-    <table>
-        <thead><tr><th>Name</th><th>Time</th><th>Confidence</th></tr></thead>
-        <tbody id="records"></tbody>
-    </table>
+<style>
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 
-    <script>
-        async function loadData() {
-            const stats = await fetch('/api/stats').then(r=>r.json());
-            document.getElementById('total').textContent = stats.total;
-            document.getElementById('late').textContent = stats.late;
+@media (max-width: 768px) {
+    .table-container table {
+        min-width: 600px;
+    }
 
-            const recs = await fetch('/api/today').then(r=>r.json());
-            const labels = recs.map(r=>r.name);
-            const data = recs.map(r=>1);
-            const ctx = document.getElementById('attendanceChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ label: '# present', data, backgroundColor: 'rgba(54, 162, 235, 0.5)' }] }
-            });
-            // load presence summary
-            const presence = await fetch('/api/presence').then(r=>r.json());
-            if (presence.summary) {
-                document.getElementById('avg_attention').textContent =
-                    presence.summary.avg_attention.toFixed(1) + '%';
-            }
+    .button-group {
+        width: 100%;
+    }
 
-            const tbody = document.getElementById('records');
-            tbody.innerHTML = '';
-            recs.forEach(r=>{
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${r.name}</td><td>${new Date(r.timestamp).toLocaleTimeString()}</td><td>${r.confidence}</td>`;
-                tbody.appendChild(tr);
-            });
-        }
-        loadData();
-    </script>
-</body>
-</html>
+    .button-group .btn {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.4rem;
+    }
+
+    .stats-grid {
+        gap: 1rem;
+    }
+
+    .stat-card {
+        padding: 1.25rem;
+    }
+
+    .stat-card .value {
+        font-size: 1.8rem;
+    }
+}
+</style>
+{% endblock %}

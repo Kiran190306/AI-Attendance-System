@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AI Attendance App</string>
+    <string name="login_title">Sign in to your account</string>
+    <string name="login_subtitle">Secure attendance tracking with face recognition</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">Login</string>
+    <string name="signup_button">Sign Up</string>
+    <string name="dashboard_subtitle">Review attendance, analytics, and student status.</string>
+    <string name="welcome_label">Welcome, %1$s</string>
+    <string name="total_students">Total Students</string>
+    <string name="present_today">Present Today</string>
+    <string name="attendance_percentage">Attendance Percentage</string>
+    <string name="view_attendance">View Attendance</string>
+    <string name="logout">Logout</string>
+    <string name="attendance_title">Attendance Records</string>
+    <string name="attendance_subtitle">Swipe down to refresh the latest data.</string>
+    <string name="no_attendance_records">No attendance records available.</string>
+    <string name="loading_text">Loading…</string>
+    <string name="web_error_message">Unable to load the dashboard. Please check your connection.</string>
+    <string name="retry">Retry</string>
+    <string name="splash_subtitle">Preparing your smart attendance experience…</string>
+    <string name="error_no_connection">No internet connection. Please connect and try again.</string>
+    <string name="error_login_failed">Login failed. Check your credentials.</string>
+    <string name="error_signup_failed">Signup failed. Please try another username.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_unauthorized">Invalid username or password.</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="confidence">Confidence</string>
+</resources>
