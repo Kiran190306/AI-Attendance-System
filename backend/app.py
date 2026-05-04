@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 # create Flask app
 app = Flask(
     __name__,
-    static_folder="../frontend",
+    static_folder="..//frontend",
     static_url_path="",
-    template_folder="../frontend",
+    template_folder="..//frontend",
 )
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+logger.info("CORS enabled for API routes")
 
 # Setup request logging middleware
 setup_request_logging(app)
@@ -60,6 +61,7 @@ def api_mark_attendance():
         if not payload:
             return jsonify({"error": "invalid payload"}), 400
 
+        logger.info("Received payload: %s", payload)
         name = payload.get("student_name") or payload.get("name")
         if not name:
             return jsonify({"error": "student_name required"}), 400

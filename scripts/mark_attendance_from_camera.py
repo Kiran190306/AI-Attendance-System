@@ -16,6 +16,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("face_mark")
 
+DEFAULT_API_URL = "https://ai-attendance-system-vi47.onrender.com/api/mark_attendance"
+
 
 def load_known_faces(dataset_dir):
     known_encodings = []
@@ -43,11 +45,12 @@ def load_known_faces(dataset_dir):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--api", default="https://ai-attendance-system-vi47.onrender.com/api/mark_attendance")
+    parser.add_argument("--api", default=DEFAULT_API_URL)
     parser.add_argument("--dataset", default="dataset")
     parser.add_argument("--camera", type=int, default=0)
     parser.add_argument("--tolerance", type=float, default=0.5)
     parser.add_argument("--interval", type=int, default=60, help="minimum seconds between marking same student")
+    parser.add_argument("--retries", type=int, default=3, help="number of retries for failed POST requests")
     args = parser.parse_args()
 
     known_encodings, known_names = load_known_faces(args.dataset)
@@ -90,19 +93,25 @@ def main():
                     last = last_marked.get(name)
                     if last is None or (now - last) >= args.interval:
                         payload = {
-                            "student_name": name,
+                            "name": name,
                             "confidence": round(confidence, 2),
-                            "camera": f"camera_{args.camera}",
+                            "camera": f"cam{args.camera}",
                         }
-                        try:
-                            resp = requests.post(args.api, json=payload, timeout=5)
-                            if resp.status_code in (200, 201):
-                                logger.info("Marked attendance for %s (conf=%.2f)", name, confidence)
-                                last_marked[name] = now
-                            else:
-                                logger.warning("Failed to mark %s: %s %s", name, resp.status_code, resp.text)
-                        except Exception as e:
-                            logger.warning("Error posting attendance: %s", e)
+                        success = False
+                        for attempt in range(1, args.retries + 1):
+                            try:
+                                resp = requests.post(args.api, json=payload, timeout=10)
+                                if resp.status_code in (200, 201):
+                                    logger.info("Marked attendance for %s (conf=%.2f) on attempt %s", name, confidence, attempt)
+                                    last_marked[name] = now
+                                    success = True
+                                    break
+                                logger.warning("Attempt %s failed for %s: %s %s", attempt, name, resp.status_code, resp.text)
+                            except Exception as e:
+                                logger.warning("Attempt %s error posting attendance for %s: %s", attempt, name, e)
+                            time.sleep(min(2 ** attempt, 10))
+                        if not success:
+                            logger.error("Unable to post attendance for %s after %s attempts", name, args.retries)
 
                 # Draw box around face
                 top, right, bottom, left = face_location
