@@ -1,6 +1,8 @@
 package com.attendance.app.ui.attendance;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -28,6 +30,8 @@ import retrofit2.Response;
 
 public class AttendanceActivity extends AppCompatActivity {
 
+    private static final long REFRESH_INTERVAL_MS = 5000;
+
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -37,6 +41,14 @@ public class AttendanceActivity extends AppCompatActivity {
 
     private TokenManager tokenManager;
     private ApiService apiService;
+    private Handler refreshHandler;
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            loadAttendance();
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +57,7 @@ public class AttendanceActivity extends AppCompatActivity {
 
         tokenManager = new TokenManager(this);
         apiService = RetrofitClient.getApiService();
+        refreshHandler = new Handler(Looper.getMainLooper());
 
         recyclerView = findViewById(R.id.recycler_view);
         progressBar = findViewById(R.id.progress_bar);
@@ -60,13 +73,36 @@ public class AttendanceActivity extends AppCompatActivity {
         loadAttendance();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAutoRefresh();
+    }
+
+    @Override
+    protected void onPause() {
+        stopAutoRefresh();
+        super.onPause();
+    }
+
+    private void startAutoRefresh() {
+        stopAutoRefresh();
+        refreshHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+    }
+
+    private void stopAutoRefresh() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+    }
+
     private void loadAttendance() {
         clearError();
         showEmpty(false);
 
         if (!NetworkUtil.isNetworkAvailable(this)) {
             swipeRefreshLayout.setRefreshing(false);
+            progressBar.setVisibility(View.GONE);
             showError(getString(R.string.error_no_connection));
+            showToast(getString(R.string.error_no_connection));
             return;
         }
 

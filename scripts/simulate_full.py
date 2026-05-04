@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Continuously simulate face recognition and attendance marking."""
+"""Continuously simulate attendance marking without camera input."""
 
 import requests
 import time
 import logging
 import random
 import csv
-import os
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +23,6 @@ BASE_DIR = Path(__file__).resolve().parent
 CSV_DIR = BASE_DIR.parent / "attendance"
 CSV_FILE = CSV_DIR / "attendance.csv"
 
-# Student pool for simulation
 STUDENT_POOL = [
     "Kiran", "Priya", "Arjun", "Meera", "Rohan",
     "Isha", "Vikram", "Anjali", "Dev", "Neha"
@@ -31,9 +30,9 @@ STUDENT_POOL = [
 
 CAMERA_POOL = ["cam1", "cam2", "cam3"]
 
-# Track last marked time to prevent duplicates
 last_marked_time = {}
-DUPLICATE_PREVENTION_INTERVAL = 30  # seconds
+DUPLICATE_PREVENTION_INTERVAL = 45  # seconds
+stop_event = threading.Event()
 
 
 def ensure_csv():
@@ -50,27 +49,20 @@ def post_with_retry(url, payload, retries=3, timeout=10):
     for attempt in range(1, retries + 1):
         try:
             resp = requests.post(url, json=payload, timeout=timeout)
-            logger.info(
-                "POST attempt %d: %s status=%d",
-                attempt,
-                url,
-                resp.status_code
-            )
+            logger.info("POST attempt %d to %s status=%d", attempt, url, resp.status_code)
+            logger.info("POST payload: %s", payload)
+            logger.info("POST response body: %s", resp.text.strip())
             if resp.status_code in (200, 201):
-                logger.info("✓ Attendance marked: %s", payload)
                 return resp
-            logger.warning(
-                "POST attempt %d failed: status=%d body=%s",
-                attempt,
-                resp.status_code,
-                resp.text[:200]
-            )
+            logger.warning("POST attempt %d failed: status=%d", attempt, resp.status_code)
         except Exception as e:
             logger.warning("POST attempt %d error: %s", attempt, str(e))
+
         if attempt < retries:
             backoff = min(2 ** attempt, 10)
             logger.info("Retrying in %d seconds...", backoff)
             time.sleep(backoff)
+
     logger.error("Failed to post attendance after %d attempts", retries)
     return None
 
@@ -79,6 +71,7 @@ def get_attendance_count():
     """Fetch current attendance count from API."""
     try:
         resp = requests.get(GET_URL, timeout=10)
+        logger.info("GET /api/attendance status=%d", resp.status_code)
         if resp.status_code == 200:
             data = resp.json()
             count = len(data) if isinstance(data, list) else 0
@@ -90,101 +83,91 @@ def get_attendance_count():
     return 0
 
 
-def simulate_detection():
-    """Generate random attendance entry."""
-    name = random.choice(STUDENT_POOL)
+def simulate_detection(students):
+    """Generate a random attendance event."""
+    name = random.choice(students)
     now_time = time.time()
-    
-    # Check duplicate prevention
+
     last_mark = last_marked_time.get(name, 0)
     if (now_time - last_mark) < DUPLICATE_PREVENTION_INTERVAL:
-        logger.debug(
-            "Skip %s: marked %.1f seconds ago (threshold=%d)",
-            name,
-            now_time - last_mark,
-            DUPLICATE_PREVENTION_INTERVAL
-        )
+        logger.info("Duplicate prevention: skipping %s, last marked %.1f seconds ago", name, now_time - last_mark)
         return False
-    
+
     confidence = round(random.uniform(0.85, 0.99), 2)
     camera = random.choice(CAMERA_POOL)
-    
     payload = {
         "name": name,
         "confidence": confidence,
         "camera": camera,
     }
-    
-    logger.info(
-        "Detecting face: %s (conf=%.2f, camera=%s)",
-        name,
-        confidence,
-        camera
-    )
-    
+
+    logger.info("Posting attendance for %s (confidence=%.2f, camera=%s)", name, confidence, camera)
     resp = post_with_retry(API_URL, payload)
+
     if resp is not None and resp.status_code in (200, 201):
         last_marked_time[name] = now_time
-        
-        # Write to local CSV for local verification
+        logger.info("Attendance successfully posted for %s", name)
+
         now = datetime.now()
         date_val = now.strftime("%Y-%m-%d")
         time_str = now.strftime("%H:%M:%S")
-        
         try:
             with open(CSV_FILE, 'a', newline='') as f:
                 writer = csv.writer(f)
-                row_id = sum(1 for line in open(CSV_FILE)) if CSV_FILE.exists() else 1
+                row_id = sum(1 for _ in open(CSV_FILE)) if CSV_FILE.exists() else 1
                 writer.writerow([row_id, name, date_val, time_str, camera, confidence])
         except Exception as e:
             logger.error("Error writing to CSV: %s", str(e))
-        
         return True
+
+    logger.warning("Attendance post failed for %s", name)
     return False
 
 
+def attendance_scheduler(students):
+    """Send attendance events in a scheduled loop."""
+    while not stop_event.is_set():
+        simulate_detection(students)
+        interval = random.uniform(5, 10)
+        logger.info("Next attendance event in %.1f seconds", interval)
+        stop_event.wait(interval)
+
+
+def monitor_attendance():
+    """Poll the attendance count periodically."""
+    while not stop_event.is_set():
+        get_attendance_count()
+        stop_event.wait(15)
+
+
 def main():
-    """Main simulation loop."""
     logger.info("=" * 60)
     logger.info("AI ATTENDANCE SIMULATOR - STARTING")
     logger.info("API URL: %s", API_URL)
-    logger.info("Student Pool: %s", STUDENT_POOL)
     logger.info("Duplicate Prevention: %d seconds", DUPLICATE_PREVENTION_INTERVAL)
     logger.info("=" * 60)
-    
+
     ensure_csv()
-    
-    iteration = 0
+
+    active_students = random.sample(STUDENT_POOL, random.randint(5, min(10, len(STUDENT_POOL))))
+    logger.info("Simulating attendance for students: %s", ", ".join(active_students))
+
+    scheduler_thread = threading.Thread(target=attendance_scheduler, args=(active_students,), daemon=True)
+    monitor_thread = threading.Thread(target=monitor_attendance, daemon=True)
+
+    scheduler_thread.start()
+    monitor_thread.start()
+
     try:
-        while True:
-            iteration += 1
-            logger.info("\n[Iteration %d] Starting detection cycle...", iteration)
-            
-            # Simulate 1-3 detections per cycle
-            detections_this_cycle = random.randint(1, 3)
-            for _ in range(detections_this_cycle):
-                simulate_detection()
-                time.sleep(random.uniform(1, 3))
-            
-            # Check current count
-            current_count = get_attendance_count()
-            logger.info(
-                "[Iteration %d] Cycle complete. Total records: %d",
-                iteration,
-                current_count
-            )
-            
-            # Wait before next cycle
-            wait_time = random.uniform(5, 10)
-            logger.info("Waiting %.1f seconds before next cycle...\n", wait_time)
-            time.sleep(wait_time)
+        while scheduler_thread.is_alive() and monitor_thread.is_alive():
+            scheduler_thread.join(timeout=1)
+            monitor_thread.join(timeout=1)
     except KeyboardInterrupt:
-        logger.info("\n" + "=" * 60)
-        logger.info("SIMULATOR STOPPED BY USER")
-        logger.info("=" * 60)
-    except Exception as e:
-        logger.error("Simulator error: %s", str(e), exc_info=True)
-        raise
+        logger.info("Stopping simulator...")
+        stop_event.set()
+        scheduler_thread.join()
+        monitor_thread.join()
+        logger.info("Simulator stopped.")
 
 
 if __name__ == '__main__':

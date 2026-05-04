@@ -2,6 +2,8 @@ package com.attendance.app.ui.dashboard;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -13,9 +15,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.attendance.app.R;
-import com.attendance.app.api.AnalyticsResponse;
 import com.attendance.app.api.ApiService;
 import com.attendance.app.api.RetrofitClient;
+import com.attendance.app.api.StatsResponse;
 import com.attendance.app.ui.attendance.AttendanceActivity;
 import com.attendance.app.ui.login.LoginActivity;
 import com.attendance.app.utils.NetworkUtil;
@@ -26,6 +28,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class DashboardActivity extends AppCompatActivity {
+
+    private static final long REFRESH_INTERVAL_MS = 5000;
 
     private TextView usernameText;
     private TextView totalStudentsText;
@@ -39,6 +43,14 @@ public class DashboardActivity extends AppCompatActivity {
 
     private TokenManager tokenManager;
     private ApiService apiService;
+    private Handler refreshHandler;
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            loadAnalytics();
+            refreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +59,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         tokenManager = new TokenManager(this);
         apiService = RetrofitClient.getApiService();
+        refreshHandler = new Handler(Looper.getMainLooper());
 
         if (!tokenManager.isLoggedIn()) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -77,31 +90,54 @@ public class DashboardActivity extends AppCompatActivity {
         loadAnalytics();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAutoRefresh();
+    }
+
+    @Override
+    protected void onPause() {
+        stopAutoRefresh();
+        super.onPause();
+    }
+
+    private void startAutoRefresh() {
+        stopAutoRefresh();
+        refreshHandler.postDelayed(refreshRunnable, REFRESH_INTERVAL_MS);
+    }
+
+    private void stopAutoRefresh() {
+        refreshHandler.removeCallbacks(refreshRunnable);
+    }
+
     private void loadAnalytics() {
         clearError();
 
         if (!NetworkUtil.isNetworkAvailable(this)) {
             swipeRefreshLayout.setRefreshing(false);
+            progressBar.setVisibility(View.GONE);
             showError(getString(R.string.error_no_connection));
+            showToast(getString(R.string.error_no_connection));
             return;
         }
 
         progressBar.setVisibility(View.VISIBLE);
 
         String token = tokenManager.getBearerToken();
-        apiService.getAnalytics(token).enqueue(new Callback<AnalyticsResponse>() {
+        apiService.getStats(token).enqueue(new Callback<StatsResponse>() {
             @Override
-            public void onResponse(Call<AnalyticsResponse> call, Response<AnalyticsResponse> response) {
+            public void onResponse(Call<StatsResponse> call, Response<StatsResponse> response) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    AnalyticsResponse analytics = response.body();
-                    totalStudentsText.setText(String.valueOf(analytics.getTotalStudents()));
-                    presentTodayText.setText(String.valueOf(analytics.getPresentToday()));
-                    attendancePercentageText.setText(String.format("%.1f%%", analytics.getAttendancePercentage()));
+                    StatsResponse stats = response.body();
+                    totalStudentsText.setText(String.valueOf(stats.getTotalRecords()));
+                    presentTodayText.setText(String.valueOf(stats.getPresentToday()));
+                    attendancePercentageText.setText(String.format("%.1f%%", stats.getAvgConfidence() * 100.0));
                 } else {
-                    Log.e("DashboardActivity", "Analytics response failed code: " + response.code());
+                    Log.e("DashboardActivity", "Stats response failed code: " + response.code());
                     String message = getString(R.string.error_server);
                     showError(message);
                     showToast(message);
@@ -109,10 +145,10 @@ public class DashboardActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<AnalyticsResponse> call, Throwable t) {
+            public void onFailure(Call<StatsResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
-                Log.e("DashboardActivity", "Analytics request failed", t);
+                Log.e("DashboardActivity", "Stats request failed", t);
                 String message = getString(R.string.error_server);
                 showError(message);
                 showToast(message);

@@ -55,9 +55,10 @@ logger.info("All blueprints registered")
 
 @app.route("/api/mark_attendance", methods=["POST"], strict_slashes=False)
 def api_mark_attendance():
-    logger.info("POST /api/mark_attendance called (app route)")
+    logger.info("POST /api/mark_attendance received")
     try:
         payload = request.get_json(force=True)
+        logger.info("POST /api/mark_attendance payload: %s", payload)
         if not payload:
             return jsonify({"error": "invalid payload"}), 400
 

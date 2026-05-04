@@ -15,8 +15,8 @@ public interface ApiService {
     @POST("/api/signup")
     Call<LoginResponse> signup(@Body LoginRequest request);
 
-    @GET("/api/analytics")
-    Call<AnalyticsResponse> getAnalytics(@Header("Authorization") String token);
+    @GET("/api/stats")
+    Call<StatsResponse> getStats(@Header("Authorization") String token);
 
     @GET("/api/attendance")
     Call<List<AttendanceRecord>> getAttendance(@Header("Authorization") String token);

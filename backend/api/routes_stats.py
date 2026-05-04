@@ -34,9 +34,9 @@ def _map_record(r):
     }
 
 
-@stats_bp.route("/stats", methods=["GET"])
+@stats_bp.route("/stats", methods=["GET"], strict_slashes=False)
 def get_stats():
-    logger.info("Fetching /api/stats")
+    logger.info("GET /api/stats received")
     try:
         all_recs = get_attendance_records()
         total_records = len(all_recs)

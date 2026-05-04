@@ -18,9 +18,9 @@ def _entry_to_dict(entry):
     }
 
 
-@attendance_bp.route("", methods=["GET"])
+@attendance_bp.route("", methods=["GET"], strict_slashes=False)
 def get_attendance():
-    logger.info("Fetching attendance records")
+    logger.info("GET /api/attendance received")
     # if download query provided, send raw CSV
     if request.args.get("download"):
         # serve the underlying CSV file
