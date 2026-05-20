@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Optional, Dict, Tuple
 
 import numpy as np
-import mediapipe as mp
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -46,8 +45,27 @@ class EmbeddingsRecognizer:
     def __init__(self):
         self.student_embeddings: Dict[str, np.ndarray] = {}
         self.marked_students = set()
+        # Try to use pre-trained encodings first
+        self._use_pretrained = False
         
     def load_embeddings_from_dataset(self):
+        """Load embeddings from dataset or pre-trained encodings."""
+        # First try to load from pre-trained encodings.pkl
+        try:
+            from backend.core.face_trainer import get_trainer
+            trainer = get_trainer()
+            if trainer.encodings_dict:
+                self.student_embeddings = trainer.encodings_dict
+                self._use_pretrained = True
+                logger.info(f"Loaded {len(self.student_embeddings)} pre-trained embeddings")
+                return True
+        except Exception as e:
+            logger.debug(f"Could not load pre-trained encodings: {e}")
+        
+        # Fallback to loading from dataset directory
+        return self._load_from_dataset()
+    
+    def _load_from_dataset(self):
         """Load and cache embeddings from dataset directory."""
         if not DATASET_PATH.exists():
             logger.warning(f"Dataset path not found: {DATASET_PATH}")
@@ -69,9 +87,9 @@ class EmbeddingsRecognizer:
             embeddings = []
             
             # Find all face images
-            face_images = list(student_dir.glob("face_*.jpg")) + \
-                         list(student_dir.glob("face_*.jpeg")) + \
-                         list(student_dir.glob("face_*.png"))
+            face_images = list(student_dir.glob("*.jpg")) + \
+                         list(student_dir.glob("*.jpeg")) + \
+                         list(student_dir.glob("*.png"))
             
             if not face_images:
                 logger.warning(f"No face images found for {student_name}")
@@ -137,20 +155,30 @@ class EmbeddingsRecognizer:
         
         return None, 0.0
     
-    def mark_attendance(self, student_name: str) -> bool:
-        """Mark attendance and log to CSV."""
+    def mark_attendance(self, student_name: str, confidence: float = 1.0, camera: str = "") -> bool:
+        """Mark attendance via API."""
         if student_name in self.marked_students:
             return False
         
-        self.marked_students.add(student_name)
+        try:
+            import requests
+            api_url = os.getenv('CLOUD_API_URL') or os.getenv('API_URL') or os.getenv('SERVER_URL') or 'http://localhost:5000'
+            endpoint = f"{api_url.rstrip('/')}/api/mark_attendance"
+            response = requests.post(endpoint, json={
+                'name': student_name,
+                'confidence': confidence,
+                'camera': camera
+            }, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('marked'):
+                    self.marked_students.add(student_name)
+                    logger.info("Marked attendance: %s", student_name)
+                    return True
+        except Exception as e:
+            logger.exception("Failed to mark attendance via API: %s", e)
         
-        # Write to CSV
-        with open(ATTENDANCE_CSV, "a") as f:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            f.write(f"{student_name},{timestamp}\n")
-        
-        logger.info(f"Marked attendance: {student_name}")
-        return True
+        return False
 
 
 def extract_face_embedding(frame_bgr: np.ndarray, face_loc: tuple) -> Optional[np.ndarray]:
@@ -174,7 +202,6 @@ def extract_face_embedding(frame_bgr: np.ndarray, face_loc: tuple) -> Optional[n
 
 def detect_faces_with_optimization(
     frame_bgr: np.ndarray,
-    detector: mp.solutions.face_detection.FaceDetection,
     scale: float = 1.0,
 ) -> list[tuple[int, int, int, int, float]]:
     """
@@ -188,26 +215,28 @@ def detect_faces_with_optimization(
     # Scale frame for faster detection if needed
     if scale < 1.0:
         scaled_frame = cv2.resize(frame_bgr, (int(w * scale), int(h * scale)))
+        scale_factor = 1.0 / scale
     else:
         scaled_frame = frame_bgr
+        scale_factor = 1.0
     
     # Convert to RGB
     rgb = cv2.cvtColor(scaled_frame, cv2.COLOR_BGR2RGB)
-    results = detector.process(rgb)
+    
+    # Use face_recognition for face detection
+    face_locations = face_recognition.face_locations(rgb, model="hog")
     
     boxes = []
-    if results.detections:
-        for detection in results.detections:
-            bbox = detection.location_data.relative_bounding_box
-            
-            # Convert back to original frame coordinates
-            x_min = max(0, int(bbox.xmin * w / scale))
-            y_min = max(0, int(bbox.ymin * h / scale))
-            x_max = min(w, int((bbox.xmin + bbox.width) * w / scale))
-            y_max = min(h, int((bbox.ymin + bbox.height) * h / scale))
-            
-            confidence = detection.score[0] if detection.score else 0.5
-            boxes.append((x_min, y_min, x_max, y_max, confidence))
+    for top, right, bottom, left in face_locations:
+        # Scale back to original size
+        x_min = int(left * scale_factor)
+        y_min = int(top * scale_factor)
+        x_max = int(right * scale_factor)
+        y_max = int(bottom * scale_factor)
+        confidence = 0.9  # face_recognition doesn't provide confidence, assume high
+        boxes.append((x_min, y_min, x_max, y_max, confidence))
+    
+    return boxes
     
     return boxes
 
@@ -226,13 +255,6 @@ def run_attendance_system():
     if not recognizer.load_embeddings_from_dataset():
         logger.error("Failed to load embeddings. Ensure dataset exists and contains face images.")
         return 1
-    
-    # Initialize MediaPipe face detection
-    mp_face = mp.solutions.face_detection
-    detector = mp_face.FaceDetection(
-        model_selection=0,
-        min_detection_confidence=MIN_DETECTION_CONFIDENCE,
-    )
     
     # Initialize camera
     cap = cv2.VideoCapture(0)
@@ -269,7 +291,6 @@ def run_attendance_system():
             # Detect faces with optimization
             boxes = detect_faces_with_optimization(
                 frame,
-                detector,
                 scale=DETECTION_SCALE,
             )
             
@@ -294,7 +315,7 @@ def run_attendance_system():
                     if student_name:
                         # Draw green box for recognized face
                         color = (0, 255, 0)
-                        marked = recognizer.mark_attendance(student_name)
+                        marked = recognizer.mark_attendance(student_name, confidence, "Webcam")
                         status = "✓ Marked" if marked else "✓ Marked"
                         label = f"{student_name} {confidence:.0%}"
                         text = f"Recognized: {label}"
@@ -348,7 +369,6 @@ def run_attendance_system():
     finally:
         cap.release()
         cv2.destroyAllWindows()
-        detector.close()
         
         logger.info(f"Session complete: Marked {len(recognizer.marked_students)} students")
         return 0

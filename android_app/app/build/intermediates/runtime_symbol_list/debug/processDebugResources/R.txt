@@ -3328,6 +3328,7 @@ int id mtrl_picker_text_input_range_start 0x7f080130
 int id mtrl_picker_title_text 0x7f080131
 int id mtrl_view_tag_bottom_padding 0x7f080132
 int id multiply 0x7f080133
+int id name_input 0x7f080207
 int id navigation_bar_item_active_indicator_view 0x7f080134
 int id navigation_bar_item_icon_container 0x7f080135
 int id navigation_bar_item_icon_view 0x7f080136
@@ -3390,6 +3391,7 @@ int id save_non_transition_alpha 0x7f08016e
 int id save_overlay_view 0x7f08016f
 int id sawtooth 0x7f080170
 int id scale 0x7f080171
+int id scan_button 0x7f080208
 int id screen 0x7f080172
 int id scroll 0x7f080173
 int id scrollIndicatorDown 0x7f080174
@@ -3656,6 +3658,7 @@ int layout activity_attendance 0x7f0b001c
 int layout activity_dashboard 0x7f0b001d
 int layout activity_login 0x7f0b001e
 int layout activity_main 0x7f0b001f
+int layout activity_scan_attendance 0x7f0b0071
 int layout activity_splash 0x7f0b0020
 int layout custom_dialog 0x7f0b0021
 int layout design_bottom_navigation_item 0x7f0b0022

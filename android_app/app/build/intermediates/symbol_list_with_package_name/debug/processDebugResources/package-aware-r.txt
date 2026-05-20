@@ -3329,6 +3329,7 @@ id mtrl_picker_text_input_range_start
 id mtrl_picker_title_text
 id mtrl_view_tag_bottom_padding
 id multiply
+id name_input
 id navigation_bar_item_active_indicator_view
 id navigation_bar_item_icon_container
 id navigation_bar_item_icon_view
@@ -3391,6 +3392,7 @@ id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
 id scale
+id scan_button
 id screen
 id scroll
 id scrollIndicatorDown
@@ -3657,6 +3659,7 @@ layout activity_attendance
 layout activity_dashboard
 layout activity_login
 layout activity_main
+layout activity_scan_attendance
 layout activity_splash
 layout custom_dialog
 layout design_bottom_navigation_item

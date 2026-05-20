@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ai-attendance-web
+    env: python
+    plan: free
+    repo: .
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn backend.app:app --workers 4 --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        value: ""
+      - key: SECRET_KEY
+        value: ""
+      - key: CORS_ORIGINS
+        value: ""
+      - key: CLOUD_API_URL
+        value: ""

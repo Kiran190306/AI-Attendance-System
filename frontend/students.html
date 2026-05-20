@@ -12,6 +12,7 @@
             <nav>
                 <a href="/" class="nav-link">Dashboard</a>
                 <a href="/attendance" class="nav-link">Attendance</a>
+                <a href="/add_student" class="nav-link">Add Student</a>
                 <a href="/students" class="nav-link active">Students</a>
             </nav>
         </header>
@@ -25,9 +26,12 @@
             </table>
         </section>
     </div>
+    <script src="static/auth.js"></script>
     <script>
+        requireAuth();
+
         async function loadStudents() {
-            const resp = await fetch('/api/students');
+            const resp = await authFetch('/api/students');
             const data = await resp.json();
             const tbody = document.querySelector('#studentsTable tbody');
             tbody.innerHTML = '';

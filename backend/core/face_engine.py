@@ -19,6 +19,7 @@ except ImportError:
 
 from .. import config
 from .dataset_loader import DatasetLoader, DatasetLoaderError
+from .face_trainer import get_trainer
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +63,25 @@ class FaceRecognitionEngine:
         self.presence = SmartPresenceAnalyzer()
 
     def initialize(self) -> None:
-        loader = DatasetLoader(self.dataset_path)
+        embeddings = {}
+
         try:
-            embeddings = loader.load_embeddings()
-        except DatasetLoaderError as exc:
-            raise FaceRecognitionEngineError(exc)
+            trainer = get_trainer()
+            if trainer.load_encodings() and trainer.encodings_dict:
+                embeddings = trainer.encodings_dict
+                logger.info(
+                    "face engine loaded stored encodings for %d students",
+                    len(embeddings),
+                )
+        except Exception as exc:
+            logger.warning("failed to load stored encodings: %s", exc)
+
+        if not embeddings:
+            try:
+                loader = DatasetLoader(self.dataset_path)
+                embeddings = loader.load_embeddings()
+            except DatasetLoaderError as exc:
+                raise FaceRecognitionEngineError(exc)
 
         if not embeddings:
             raise FaceRecognitionEngineError("no embeddings available after dataset scan")
@@ -80,6 +95,20 @@ class FaceRecognitionEngine:
             min_detection_confidence=self.detection_confidence,
         )
         logger.info("face engine initialized with %d students", len(self._name_list))
+
+    def reload_encodings(self) -> bool:
+        try:
+            trainer = get_trainer()
+            if trainer.load_encodings() and trainer.encodings_dict:
+                self._name_list = list(trainer.encodings_dict.keys())
+                self._emb_array = np.vstack(
+                    [trainer.encodings_dict[n] for n in self._name_list]
+                )
+                logger.info("face engine reloaded %d stored encodings", len(self._name_list))
+                return True
+        except Exception as exc:
+            logger.warning("failed to reload stored encodings: %s", exc)
+        return False
 
     def close(self) -> None:
         if self._detector:

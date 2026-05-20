@@ -17,27 +17,31 @@ os.environ.setdefault('DEBUG', 'False')
 
 from backend.app import app
 from backend.database.db import init_db
+import logging
+
+logger = logging.getLogger(__name__)
 
 def main():
     """Start the production server."""
-    print("=" * 70)
-    print("AI Attendance System - Production Backend")
-    print("=" * 70)
-    
+    logger.info("AI Attendance System - Production Backend")
+
+    # Change to the project root directory
+    os.chdir(Path(__file__).parent)
+    logger.info("Working directory: %s", os.getcwd())
+
     # Initialize database
-    print("✓ Initializing database...")
+    logger.info("Initializing database...")
     init_db()
-    print("✓ Database initialized")
-    
+    logger.info("Database initialized")
+
     # Run app
-    print("✓ Starting Flask app...")
-    print(f"✓ Running on http://0.0.0.0:$PORT")
-    print("=" * 70)
+    logger.info("Starting Flask app")
+    logger.info("Run with gunicorn: gunicorn backend.app:app --bind 0.0.0.0:$PORT")
     
     # For Render deployment, use:
     # gunicorn -w 4 -b 0.0.0.0:$PORT backend.app:app
     
-    # For local testing:
+    # For local testing (gunicorn has fcntl issues on Windows):
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
 
 if __name__ == '__main__':

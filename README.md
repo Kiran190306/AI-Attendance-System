@@ -45,9 +45,40 @@ flowchart TD
 
 ## Quick Start
 
-### Windows
-```cmd
-setup.bat
+### Complete System (Recommended)
+```bash
+# Run everything automatically
+python run_all.py
+# or
+bash run_all.sh
+```
+
+This will:
+- Create virtual environment
+- Install all dependencies  
+- Initialize database
+- Start Flask backend server
+- Open web dashboard in browser
+
+### Manual Setup
+```bash
+# 1. Setup environment
+pip install -r requirements.txt
+
+# 2. Initialize database
+python -c "from backend.database.db import init_db; init_db()"
+
+# 3. Start backend
+python run_production.py
+
+# 4. Open browser to http://localhost:5000
+```
+
+### Face Recognition
+```bash
+# Run face recognition (requires camera)
+python attendance_system.py
+```
 run.bat
 ```
 

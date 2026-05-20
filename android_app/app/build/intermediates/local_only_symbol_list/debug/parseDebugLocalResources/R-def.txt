@@ -21,12 +21,14 @@ id error_container
 id error_text
 id login_button
 id logout_button
+id name_input
 id password_input
 id present_today_text
 id progressBar
 id progress_bar
 id recycler_view
 id retry_button
+id scan_button
 id signup_button
 id student_name_text
 id swipe_refresh
@@ -40,6 +42,7 @@ layout activity_attendance
 layout activity_dashboard
 layout activity_login
 layout activity_main
+layout activity_scan_attendance
 layout activity_splash
 layout item_attendance
 string app_name

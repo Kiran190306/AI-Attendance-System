@@ -25,6 +25,9 @@ from backend.database.db import init_db, engine
 from backend.database.models import User
 from backend.services.user_service import get_password_hash
 from backend.database.db import SessionLocal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def check_database_connection():
@@ -32,10 +35,10 @@ def check_database_connection():
     try:
         with engine.connect() as conn:
             result = conn.execute("SELECT 1")
-            print("✓ PostgreSQL connection successful")
+            logger.info("PostgreSQL connection successful")
             return True
     except Exception as e:
-        print(f"✗ PostgreSQL connection failed: {e}")
+        logger.exception("PostgreSQL connection failed: %s", e)
         return False
 
 
@@ -43,95 +46,76 @@ def create_tables():
     """Create all database tables with indexes."""
     try:
         init_db()
-        print("✓ Database tables created successfully")
+        logger.info("Database tables created successfully")
         return True
     except Exception as e:
-        print(f"✗ Failed to create tables: {e}")
+        logger.exception("Failed to create tables: %s", e)
         return False
 
 
 def create_admin_user():
     """Create default admin user if it doesn't exist."""
     db = SessionLocal()
-    try:
-        # Check if admin already exists
-        admin = db.query(User).filter(User.username == "admin").first()
-        if admin:
-            print("✓ Admin user already exists")
+        try:
+            # Check if admin already exists
+            admin = db.query(User).filter(User.username == "admin").first()
+            if admin:
+                logger.info("Admin user already exists")
+                return True
+            
+            # Create admin user
+            admin_user = User(
+                username="admin",
+                email="admin@attendance.local",
+                hashed_password=get_password_hash("admin123")
+            )
+            db.add(admin_user)
+            db.commit()
+            logger.info("Admin user created (username: admin)")
+            logger.warning("Default admin password was set; change immediately in production")
             return True
-        
-        # Create admin user
-        admin_user = User(
-            username="admin",
-            email="admin@attendance.local",
-            hashed_password=get_password_hash("admin123")
-        )
-        db.add(admin_user)
-        db.commit()
-        print("✓ Admin user created (username: admin, password: admin123)")
-        print("  ⚠ Change password immediately in production!")
-        return True
-    except Exception as e:
-        print(f"✗ Failed to create admin user: {e}")
-        db.rollback()
-        return False
-    finally:
-        db.close()
+        except Exception as e:
+            logger.exception("Failed to create admin user: %s", e)
+            db.rollback()
+            return False
+        finally:
+            db.close()
 
 
 def print_database_info():
     """Print database information."""
     db_url = os.getenv("DATABASE_URL", "Not set")
-    print("\n" + "="*60)
-    print("PostgreSQL Database Configuration")
-    print("="*60)
-    print(f"DATABASE_URL: {db_url}")
-    print("\nDatabase Tables Created:")
-    print("  - users (id, username, email, hashed_password, created_at)")
-    print("  - students (id, name, created_at)")
-    print("  - attendance_logs (id, student_name, date, timestamp, confidence)")
-    print("\nIndexes for Performance:")
-    print("  - users: username, email, created_at")
-    print("  - students: name, created_at")
-    print("  - attendance_logs: student_name, date, timestamp, (student_name, date)")
-    print("="*60 + "\n")
+    logger.info("PostgreSQL Database Configuration")
+    logger.info("DATABASE_URL: %s", db_url)
+    logger.info("Database Tables Created: users, students, attendance_logs")
+    logger.info("Indexes: users(username,email,created_at), students(name), attendance_logs(student_name,date)")
 
 
 def main():
     """Main initialization function."""
-    print("=" * 60)
-    print("PostgreSQL Database Initialization")
-    print("=" * 60 + "\n")
-    
+    logger.info("PostgreSQL Database Initialization starting")
     # Step 1: Check connection
-    print("[1/4] Checking PostgreSQL connection...")
+    logger.info("[1/4] Checking PostgreSQL connection...")
     if not check_database_connection():
-        print("\nFailed to connect to PostgreSQL.")
-        print("Ensure PostgreSQL is running and DATABASE_URL is correct.")
+        logger.error("Failed to connect to PostgreSQL. Ensure DATABASE_URL is correct.")
         sys.exit(1)
-    print()
-    
+
     # Step 2: Create tables
-    print("[2/4] Creating database tables...")
+    logger.info("[2/4] Creating database tables...")
     if not create_tables():
-        print("\nFailed to create tables.")
+        logger.error("Failed to create tables.")
         sys.exit(1)
-    print()
-    
+
     # Step 3: Create admin user
-    print("[3/4] Setting up admin user...")
+    logger.info("[3/4] Setting up admin user...")
     create_admin_user()
-    print()
-    
+
     # Step 4: Print info
-    print("[4/4] Configuration summary...")
+    logger.info("[4/4] Configuration summary...")
     print_database_info()
-    
-    print("✓ PostgreSQL initialization complete!")
-    print("\nNext steps:")
-    print("  1. Update DATABASE_URL in .env if needed")
-    print("  2. Start backend server: python -m backend.app")
-    print("  3. API documentation available at http://localhost:5000/api/docs")
+
+    logger.info("PostgreSQL initialization complete")
+    logger.info("Next steps: update DATABASE_URL in .env if needed and start backend with gunicorn")
 
 
 if __name__ == "__main__":

@@ -45,6 +45,9 @@
         <activity
             android:name="com.attendance.app.ui.attendance.AttendanceActivity"
             android:exported="false" />
+        <activity
+            android:name="com.attendance.app.ui.scan.ScanAttendanceActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

@@ -98,3 +98,43 @@ def get_today():
         logger.error(f"Error fetching today's stats: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to retrieve today's statistics"}), 500
     return jsonify(stats)
+
+
+    @attendance_bp.route("/export_csv", methods=["GET"])
+    def export_csv():
+        """Export attendance records as CSV. Optional query param: date=YYYY-MM-DD"""
+        try:
+            date_filter = request.args.get("date")
+            from ..services.attendance_service import get_attendance_records
+            import io
+            import csv
+
+            records = get_attendance_records(date_filter) if date_filter else get_attendance_records()
+
+            # Build CSV in-memory
+            output = io.StringIO()
+            fieldnames = ["date", "time", "name", "timestamp_iso", "confidence", "camera_name"]
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for r in records:
+                # Normalize keys from CSV rows
+                row = {
+                    "date": r.get("date") or "",
+                    "time": r.get("time") or "",
+                    "name": r.get("name") or r.get("student_name") or "",
+                    "timestamp_iso": r.get("timestamp_iso") or "",
+                    "confidence": r.get("confidence") or "",
+                    "camera_name": r.get("camera_name") or r.get("camera") or r.get("camera_id") or "",
+                }
+                writer.writerow(row)
+
+            resp = output.getvalue().encode("utf-8")
+            from flask import Response
+            filename = f"attendance_export_{date_filter or 'all'}.csv"
+            response = Response(resp, mimetype="text/csv")
+            response.headers.set("Content-Disposition", "attachment", filename=filename)
+            return response
+        except Exception as e:
+            logger.error(f"Error exporting CSV: {e}", exc_info=True)
+            return jsonify({"error": "Failed to export CSV"}), 500

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = 'ai-attendance-system-secret-key-2026'  # Change this in production
+app.secret_key = os.environ.get('SECRET_KEY', 'change-this-secret-in-prod')
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'attendance.db')
 
@@ -377,4 +377,5 @@ def internal_error(error):
 if __name__ == '__main__':
     logger.info("Starting Cloud Backend Server...")
     # For production, use gunicorn: gunicorn -w 4 -b 0.0.0.0:10000 app:app
-    app.run(debug=False, host='127.0.0.1', port=10000)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(debug=False, host='0.0.0.0', port=port)

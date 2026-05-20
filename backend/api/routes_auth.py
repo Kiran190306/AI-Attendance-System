@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy.exc import IntegrityError
 import logging
 from ..services.user_service import authenticate_user, create_user, create_access_token
 
@@ -39,6 +40,40 @@ def login():
     except Exception as e:
         logger.error(f"Error generating token for user {username}: {str(e)}", exc_info=True)
         return jsonify({"error": "Token generation failed"}), 500
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    """Register endpoint for creating new users."""
+    data = request.get_json() or {}
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not username or not email or not password:
+        logger.warning(f"Register attempt with missing credentials from {request.remote_addr}")
+        return jsonify({"error": "Username, email, and password are required"}), 400
+
+    logger.info(f"Register attempt for user: {username}, email: {email}")
+
+    try:
+        user = create_user(username, email, password)
+        access_token = create_access_token(data={"sub": user.username})
+        logger.info(f"New user created successfully: {username}")
+        return jsonify({
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
+        }), 201
+    except IntegrityError:
+        logger.warning(f"User create conflict for {username}")
+        return jsonify({"error": "Username or email already exists"}), 409
+    except Exception as e:
+        logger.error(f"Error creating user {username}: {str(e)}", exc_info=True)
+        return jsonify({"error": "User creation failed", "details": str(e)}), 400
 
 @auth_bp.route("/signup", methods=["POST"])
 def signup():

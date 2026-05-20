@@ -21,18 +21,20 @@ async def init():
     admin_password = os.environ.get("ADMIN_PASSWORD", "Admin@123")
     async with AsyncSessionLocal() as db:
         r = await db.execute(select(User).where(User.email == admin_email))
-        if r.scalar_one_or_none():
-            print("Admin user already exists.")
-            return
-        admin = User(
-            email=admin_email,
-            hashed_password=hash_password(admin_password),
-            full_name="Administrator",
-            role=UserRole.ADMIN,
-        )
-        db.add(admin)
-        await db.commit()
-        print(f"Created admin user: {admin_email}")
+        import logging
++    logger = logging.getLogger(__name__)
++    if r.scalar_one_or_none():
++            logger.info("Admin user already exists.")
++            return
++        admin = User(
++            email=admin_email,
++            hashed_password=hash_password(admin_password),
++            full_name="Administrator",
++            role=UserRole.ADMIN,
++        )
++        db.add(admin)
++        await db.commit()
++        logger.info("Created admin user: %s", admin_email)
 
 
 if __name__ == "__main__":

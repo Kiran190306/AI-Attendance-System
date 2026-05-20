@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 import logging
 from datetime import date
 
-from ..services.attendance_service import get_attendance_records
+from ..services.attendance_service import get_attendance_records, get_summary, get_today_stats
 
 stats_bp = Blueprint("stats", __name__, url_prefix="/api")
 logger = logging.getLogger(__name__)
@@ -35,20 +35,25 @@ def _map_record(r):
 
 
 @stats_bp.route("/stats", methods=["GET"], strict_slashes=False)
+@stats_bp.route("/get_stats", methods=["GET"], strict_slashes=False)
 def get_stats():
-    logger.info("GET /api/stats received")
+    logger.info("GET /api/stats or /api/get_stats received")
     try:
         all_recs = get_attendance_records()
         total_records = len(all_recs)
+        summary = get_summary()
+        today_stats = get_today_stats()
         today = date.today().isoformat()
         todays_raw = [r for r in all_recs if r.get("date") == today]
         today_records = [_map_record(r) for r in todays_raw]
-        present_today = len(today_records)
         confs = [r.get("confidence") for r in today_records if r.get("confidence") is not None]
         avg_confidence = (sum(confs) / len(confs)) if confs else 0.0
         return jsonify({
             "total_records": total_records,
-            "present_today": present_today,
+            "total_students": summary.get("total_students", 0),
+            "unique_students": len({r.get("name") or r.get("student_name") for r in all_recs if r.get("name") or r.get("student_name")}),
+            "present_today": today_stats.get("present_today", 0),
+            "late_students": today_stats.get("late_students", 0),
             "today_records": today_records,
             "avg_confidence": avg_confidence,
         })

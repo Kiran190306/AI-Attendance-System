@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student - AI Attendance System</title>
+    <link rel="stylesheet" href="static/style.css">
+    <script src="static/auth.js"></script>
+    <style>
+        .add-student-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+        
+        .image-preview {
+            width: 100%;
+            max-width: 300px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+        }
+        
+        .preview-placeholder {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #ccc;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .camera-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        
+        .camera-option {
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 5px;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Add New Student</h1>
+            <nav>
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/attendance" class="nav-link">Attendance</a>
+                <a href="/add_student" class="nav-link active">Add Student</a>
+                <a href="/students" class="nav-link">Students</a>
+                <a href="#" class="nav-link" onclick="logout();return false;">Logout</a>
+            </nav>
+        </header>
+        
+        <div class="add-student-container">
+            <div id="message" class="message"></div>
+            
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label for="studentName">Student Name *</label>
+                    <input 
+                        type="text" 
+                        id="studentName" 
+                        name="name" 
+                        placeholder="Enter student name"
+                        required
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageInput">Face Image *</label>
+                    <input 
+                        type="file" 
+                        id="imageInput" 
+                        accept="image/*"
+                        required
+                    >
+                </div>
+                
+                <div class="image-preview">
+                    <img id="previewImage" style="display: none;">
+                    <div id="previewPlaceholder" class="preview-placeholder">
+                        Image preview will appear here
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Add Student</button>
+                    <button type="reset" class="btn btn-secondary">Clear</button>
+                </div>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+            
+            <div class="camera-section">
+                <h3>Alternative: Capture from Camera</h3>
+                <div class="camera-option">
+                    <p>Open your camera app and take a clear photo of the student's face, then upload it.</p>
+                    <button class="btn btn-secondary" id="cameraBtn" style="margin-top: 10px;">Open Camera</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <h3>Next Steps</h3>
+                <ol>
+                    <li>Add at least 1 student with a face image</li>
+                    <li>Click "Train Model" to process the images</li>
+                    <li>Use the attendance system with the trained model</li>
+                </ol>
+                <button class="btn btn-primary" id="trainBtn" style="margin-top: 15px;">Train Model Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('addStudentForm');
+        const imageInput = document.getElementById('imageInput');
+        const previewImage = document.getElementById('previewImage');
+        const previewPlaceholder = document.getElementById('previewPlaceholder');
+        const messageDiv = document.getElementById('message');
+        const loading = document.getElementById('loading');
+
+        requireAuth();
+        
+        // Image preview
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImage.src = event.target.result;
+                    previewImage.style.display = 'block';
+                    previewPlaceholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Submit form
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const studentName = document.getElementById('studentName').value.trim();
+            const file = imageInput.files[0];
+            
+            if (!studentName) {
+                showMessage('Student name is required', 'error');
+                return;
+            }
+            
+            if (!file) {
+                showMessage('Please select an image', 'error');
+                return;
+            }
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('name', studentName);
+            formData.append('image', file);
+            
+            // Show loading
+            loading.style.display = 'block';
+            
+            try {
+                const response = await authFetch('/api/add_student', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(`✓ ${data.message}`, 'success');
+                    form.reset();
+                    previewImage.style.display = 'none';
+                    previewPlaceholder.style.display = 'block';
+                    
+                    // Show training button
+                    setTimeout(() => {
+                        showMessage('Next: Train the model to recognize this student', 'info');
+                    }, 1500);
+                } else {
+                    showMessage(data.error || 'Failed to add student', 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Train model button
+        document.getElementById('trainBtn').addEventListener('click', async function() {
+            loading.style.display = 'block';
+            
+            try {
+                const response = await authFetch('/api/train_model', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showMessage(
+                        `✓ Model trained successfully! ` +
+                        `Trained: ${data.stats.trained}, ` +
+                        `Skipped: ${data.stats.skipped}`,
+                        'success'
+                    );
+                } else {
+                    showMessage(data.error || 'Failed to train model', 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Camera button
+        document.getElementById('cameraBtn').addEventListener('click', function() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                // Create camera modal
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                `;
+                
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    text-align: center;
+                `;
+                
+                const video = document.createElement('video');
+                video.style.cssText = 'max-width: 400px; margin: 10px 0;';
+                video.autoplay = true;
+                video.playsinline = true;
+                
+                const canvas = document.createElement('canvas');
+                canvas.style.display = 'none';
+                
+                const captureBtn = document.createElement('button');
+                captureBtn.textContent = 'Capture Photo';
+                captureBtn.className = 'btn btn-primary';
+                captureBtn.style.cssText = 'margin: 10px 5px;';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = 'Close';
+                closeBtn.className = 'btn btn-secondary';
+                closeBtn.style.cssText = 'margin: 10px 5px;';
+                
+                let stream = null;
+                
+                // Start camera
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+                    .then(s => {
+                        stream = s;
+                        video.srcObject = stream;
+                    })
+                    .catch(err => {
+                        showMessage(`Camera error: ${err.message}`, 'error');
+                        modal.remove();
+                    });
+                
+                // Capture photo
+                captureBtn.addEventListener('click', function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    
+                    // Convert to blob
+                    canvas.toBlob(blob => {
+                        const file = new File([blob], 'camera_capture.jpg', { type: 'image/jpeg' });
+                        
+                        // Trigger file input change
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        imageInput.files = dataTransfer.files;
+                        
+                        // Update preview
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            previewImage.src = e.target.result;
+                            previewImage.style.display = 'block';
+                            previewPlaceholder.style.display = 'none';
+                        };
+                        reader.readAsDataURL(file);
+                        
+                        // Close modal
+                        if (stream) stream.getTracks().forEach(track => track.stop());
+                        modal.remove();
+                        showMessage('✓ Photo captured! Now add student details and submit.', 'success');
+                    });
+                });
+                
+                // Close camera
+                closeBtn.addEventListener('click', function() {
+                    if (stream) stream.getTracks().forEach(track => track.stop());
+                    modal.remove();
+                });
+                
+                content.appendChild(video);
+                content.appendChild(canvas);
+                content.appendChild(document.createElement('br'));
+                content.appendChild(captureBtn);
+                content.appendChild(closeBtn);
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+            } else {
+                showMessage('Camera not supported on this device', 'error');
+            }
+        });
+        
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

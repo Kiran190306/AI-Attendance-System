@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Attendance Logs</title>
     <link rel="stylesheet" href="static/style.css">
+    <script src="static/auth.js"></script>
 </head>
 <body>
     <div class="container">
@@ -12,11 +13,17 @@
             <nav>
                 <a href="/" class="nav-link">Dashboard</a>
                 <a href="/attendance" class="nav-link active">Attendance</a>
+                <a href="/add_student" class="nav-link">Add Student</a>
                 <a href="/students" class="nav-link">Students</a>
+                <a href="#" class="nav-link" onclick="logout();return false;">Logout</a>
             </nav>
         </header>
         <section class="section">
-            <button class="btn" id="downloadCsv">Download CSV</button>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+                <label for="exportDate" style="font-weight:700; color:#333;">Filter date</label>
+                <input type="date" id="exportDate" />
+                <button class="btn" id="downloadCsv">Download CSV</button>
+            </div>
             <table id="attendanceTable">
                 <thead>
                     <tr><th>Date</th><th>Name</th><th>Time</th><th>Confidence</th></tr>
@@ -26,20 +33,40 @@
         </section>
     </div>
     <script>
+        requireAuth();
+
         async function loadAttendance() {
-            const resp = await fetch('/api/attendance');
+            const resp = await authFetch('/api/attendance');
             const data = await resp.json();
             const tbody = document.querySelector('#attendanceTable tbody');
             tbody.innerHTML = '';
-            data.records.forEach(r => {
+            data.forEach(r => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${r.date}</td><td>${r.name}</td><td>${r.time}</td><td>${r.confidence}</td>`;
+                tr.innerHTML = `<td>${r.date}</td><td>${r.student_name}</td><td>${r.time}</td><td>${r.confidence}</td>`;
                 tbody.appendChild(tr);
             });
         }
-        document.getElementById('downloadCsv').addEventListener('click', () => {
-            window.location = '/api/attendance?download=1';
+
+        document.getElementById('downloadCsv').addEventListener('click', async () => {
+            const date = document.getElementById('exportDate').value;
+            const url = '/api/export_csv' + (date ? ('?date=' + encodeURIComponent(date)) : '');
+            try {
+                const resp = await authFetch(url);
+                if (!resp.ok) throw new Error('Unable to download CSV');
+                const blob = await resp.blob();
+                const urlBlob = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = urlBlob;
+                a.download = `attendance_${date || 'all'}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(urlBlob);
+            } catch (error) {
+                alert(error.message || 'Download failed');
+            }
         });
+
         loadAttendance();
     </script>
 </body>
